@@ -1,0 +1,34 @@
+# Define provider
+provider "aws" {
+  region = "<YOUR_REGION>"
+}
+
+# EC2 instance
+resource "aws_instance" "web" {
+  ami           = "<YOUR_AMI_ID>"
+  instance_type = "<YOUR_INSTANCE_TYPE>"
+  key_name      = "<YOUR_KEY_PAIR_NAME>"
+  tags = {
+    Name = "web-server"
+  }
+
+  # CloudWatch monitoring
+  monitoring = true
+
+  # IAM instance profile for CloudWatch
+  iam_instance_profile = "<YOUR_CLOUDWATCH_ROLE_NAME>"
+
+  # Provisioning script with existing index.html content
+  user_data = <<-EOF
+              #!/bin/bash
+              yum install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              echo "${file("index.html")}" > /var/www/html/index.html
+              EOF
+}
+
+# Output the public DNS of the EC2 instance
+output "public_dns" {
+  value = aws_instance.web.public_dns
+}
